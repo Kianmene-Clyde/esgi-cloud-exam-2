@@ -15,7 +15,7 @@ app.set('view engine', 'twig');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -23,24 +23,31 @@ app.get('/', async function (req, res, next) {
   let articles = [];
   try {
     articles = await Article.findAll();
-  } catch (e) {}
-  res.render('index', {articles});
+  } catch (e) {
+    console.error('Error fetching articles:', e);
+  }
+  res.render('index', { articles });
 });
 
 app.post('/', async function (req, res, next) {
-  const {title, content} = req.body;
+  const { title, content } = req.body;
   console.log(req.body);
-  console.log(title);
-  console.log(content);
-  await Article.create({ title, content });
-  res.redirect('/');
+  try {
+    await Article.create({ title, content });
+    res.redirect('/');
+  } catch (e) {
+    console.error('Error creating article:', e);
+    next(e);
+  }
 });
 
 app.get('/articles', async function (req, res, next) {
   let articles = [];
   try {
     articles = await Article.findAll();
-  } catch (e) {}
+  } catch (e) {
+    console.error('Error fetching articles:', e);
+  }
   res.send(JSON.stringify(articles, null, 2));
 });
 
@@ -58,6 +65,12 @@ app.use(function (err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+// Start the server
+const PORT = process.env.PORT || 3000; // Use the port provided by Render or default to 3000
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;
